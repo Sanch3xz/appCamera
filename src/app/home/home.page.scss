@@ -1,27 +1,65 @@
-#container {
-  text-align: center;
-
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+ion-content {
+  --background: #e0f7f5;
 }
 
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
+/* Contenedor tipo galería */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 10px;
 }
 
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-
-  color: #8c8c8c;
-
-  margin: 0;
+/* Tarjeta de cada foto */
+.photo-card {
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-#container a {
-  text-decoration: none;
+/* Imagen */
+.photo-card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+/* Contenido */
+.photo-info {
+  padding: 8px;
+}
+
+/* Fecha */
+.photo-date {
+  font-size: 12px;
+  color: #555;
+}
+
+/* Descripción */
+.photo-caption {
+  font-size: 14px;
+  font-weight: 500;
+  color: #222;
+  margin: 4px 0;
+}
+
+/* Botón eliminar */
+.delete-btn {
+  --background: #20c997; /* aguamarino */
+  --border-radius: 10px;
+  font-size: 12px;
+}
+
+/* FAB botón */
+ion-fab-button {
+  --background: #20c997;
+  --background-activated: #17a589;
+  --box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Toolbar */
+ion-toolbar {
+  --background: #20c997;
+  --color: white;
 }
