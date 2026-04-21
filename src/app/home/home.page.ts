@@ -23,12 +23,6 @@ export class HomePage implements OnInit {
   async ngOnInit() {
     await this.storage.create();
     this.loadPhotos();
-
-    App.addListener('appStateChange', async ({ isActive }) => {
-      if (isActive && this.tempImage) {
-        this.showCaptionAlert();
-      }
-    });
   }
 
   async loadPhotos(){
@@ -53,14 +47,14 @@ export class HomePage implements OnInit {
           text: 'Permitir',
           handler: async () => {
 
-            const image = await Camera.getPhoto({
+            const image = await Camera.takePhoto({
               quality: 90,
-              allowEditing: false,
-              resultType: CameraResultType.DataUrl,
-              source: CameraSource.Camera
+              editable: 'no',
             });
 
-            this.tempImage = image.dataUrl || '';
+            this.tempImage = ("data:image/png;base64," + image.thumbnail) || '';
+
+            await this.showCaptionAlert();
           }
         }
       ]
