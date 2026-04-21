@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { AlertController } from '@ionic/angular';
 import { Storage } from '@ionic/storage-angular';
+import { App } from '@capacitor/app';
 
 @Component({
   selector: 'app-home',
@@ -12,6 +13,7 @@ import { Storage } from '@ionic/storage-angular';
 export class HomePage implements OnInit {
 
   photos: {image: string, date: string, caption: string}[] = [];
+  tempImage: string = '';
 
   constructor(
     private alertController: AlertController,
@@ -21,6 +23,12 @@ export class HomePage implements OnInit {
   async ngOnInit() {
     await this.storage.create();
     this.loadPhotos();
+
+    App.addListener('appStateChange', async ({ isActive }) => {
+      if (isActive && this.tempImage) {
+        this.showCaptionAlert();
+      }
+    });
   }
 
   async loadPhotos(){
@@ -38,12 +46,9 @@ export class HomePage implements OnInit {
 
     const alertPermiso = await this.alertController.create({
       header: 'Permiso de cámara',
-      message: 'La app necesita acceso a la cámara para tomar fotos',
+      message: 'La app necesita acceso a la cámara',
       buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
+        { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Permitir',
           handler: async () => {
@@ -55,41 +60,7 @@ export class HomePage implements OnInit {
               source: CameraSource.Camera
             });
 
-            const alertCaption = await this.alertController.create({
-              header: 'Descripción',
-              inputs: [
-                {
-                  name: 'caption',
-                  type: 'text',
-                  placeholder: 'Escribe una descripción'
-                }
-              ],
-              buttons: [
-                {
-                  text: 'Cancelar',
-                  role: 'cancel'
-                },
-                {
-                  text: 'Guardar',
-                  handler: async (data) => {
-
-                    const captionFinal = data.caption && data.caption.trim() !== ''
-                      ? data.caption
-                      : 'Por defecto';
-
-                    this.photos.unshift({
-                      image: image.dataUrl || '',
-                      date: new Date().toLocaleDateString(),
-                      caption: captionFinal
-                    });
-
-                    await this.savePhotos();
-                  }
-                }
-              ]
-            });
-
-            await alertCaption.present();
+            this.tempImage = image.dataUrl || '';
           }
         }
       ]
@@ -98,16 +69,50 @@ export class HomePage implements OnInit {
     await alertPermiso.present();
   }
 
+  async showCaptionAlert() {
+
+    const alert = await this.alertController.create({
+      header: 'Descripción',
+      inputs: [
+        {
+          name: 'caption',
+          type: 'text',
+          placeholder: 'Escribe una descripción'
+        }
+      ],
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Guardar',
+          handler: async (data) => {
+
+            const captionFinal = data.caption && data.caption.trim() !== ''
+              ? data.caption
+              : 'Sin descripción';
+
+            this.photos.unshift({
+              image: this.tempImage,
+              date: new Date().toLocaleDateString(),
+              caption: captionFinal
+            });
+
+            this.tempImage = '';
+            await this.savePhotos();
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
+
   async deletePhoto(index: number) {
 
     const alert = await this.alertController.create({
       header: 'Eliminar',
       message: '¿Seguro que quieres eliminar esta foto?',
       buttons: [
-        {
-          text: 'Cancelar',
-          role: 'cancel'
-        },
+        { text: 'Cancelar', role: 'cancel' },
         {
           text: 'Eliminar',
           handler: async () => {

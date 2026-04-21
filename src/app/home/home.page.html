@@ -1,31 +1,25 @@
 <ion-header>
   <ion-toolbar>
     <ion-title>
-      Camera
+      CAMARA
     </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
 
-  <div class="gallery">
-    <div class="photo-card" *ngFor="let photo of photos; let i = index">
-      
+  <div class="list-container">
+    <div class="photo-item" *ngFor="let photo of photos; let i = index">
+
       <img [src]="photo.image" alt="img">
 
-      <div class="photo-info">
-        <div class="photo-date">
-          {{photo.date}}
-        </div>
-
-        <div class="photo-caption">
-          {{photo.caption}}
-        </div>
+      <div class="photo-details">
+        <div class="photo-date">{{photo.date}}</div>
+        <div class="photo-caption">{{photo.caption}}</div>
 
         <ion-button 
           class="delete-btn" 
-          size="small" 
-          expand="block"
+          size="small"
           (click)="deletePhoto(i)">
           Eliminar
         </ion-button>
