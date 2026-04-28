@@ -1,8 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { AlertController } from '@ionic/angular';
-import { Storage } from '@ionic/storage-angular';
 import { App } from '@capacitor/app';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
+
+import { PhotoDbService } from "./photo-db.service";
+import { PhotoItem } from "./IPhotoitem";
 
 @Component({
   selector: 'app-home',
@@ -12,33 +16,37 @@ import { App } from '@capacitor/app';
 })
 export class HomePage implements OnInit {
 
-  photos: {image: string, date: string, caption: string}[] = [];
+  photos: PhotoItem[] = [];
   tempImage: string = '';
 
   constructor(
     private alertController: AlertController,
-    private storage: Storage
+    private photoDb: PhotoDbService
   ) {}
 
   async ngOnInit() {
-    await this.storage.create();
+    await this.photoDb.init();
     this.loadPhotos();
+
+    App.addListener('appStateChange', async ({ isActive }) => {
+      if (isActive && this.tempImage) {
+        this.showCaptionAlert();
+      }
+    });
   }
 
-  async loadPhotos(){
-    const data = await this.storage.get('photos');
-    if(data){
-      this.photos = data;
-    }
+  async loadPhotos() {
+    const data = await this.photoDb.getPhoto();
+
+  this.photos = data.map(photo => ({
+    ...photo,
+    imagePath: Capacitor.convertFileSrc(photo.imagePath) 
+  }));
   }
 
-  async savePhotos(){
-    await this.storage.set('photos', this.photos);
-  }
+  async takePicture() {
 
-  async takePicture(){
-
-    const alertPermiso = await this.alertController.create({
+    const alert = await this.alertController.create({
       header: 'Permiso de cámara',
       message: 'La app necesita acceso a la cámara',
       buttons: [
@@ -47,21 +55,47 @@ export class HomePage implements OnInit {
           text: 'Permitir',
           handler: async () => {
 
-            const image = await Camera.takePhoto({
+            const image = await Camera.getPhoto({
               quality: 90,
-              editable: 'no',
+              allowEditing: false,
+              resultType: CameraResultType.Uri, // 🔥 CAMBIO
+              source: CameraSource.Camera
             });
 
-            this.tempImage = ("data:image/png;base64," + image.thumbnail) || '';
-
-            await this.showCaptionAlert();
+            if (image.webPath) {
+              this.tempImage = await this.saveImage(image.webPath);
+            }
           }
         }
       ]
     });
 
-    await alertPermiso.present();
+    await alert.present();
   }
+
+  async saveImage(webPath: string): Promise<string> {
+    const response = await fetch(webPath);
+    const blob = await response.blob();
+
+    const base64Data = await this.convertBlobToBase64(blob) as string;
+
+    const fileName = new Date().getTime() + '.jpeg';
+
+    const savedFile = await Filesystem.writeFile({
+      path: fileName,
+      data: base64Data,
+      directory: Directory.Data
+    });
+
+    return savedFile.uri;
+  }
+
+  convertBlobToBase64 = (blob: Blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = () => resolve(reader.result);
+    reader.readAsDataURL(blob);
+  });
 
   async showCaptionAlert() {
 
@@ -80,18 +114,17 @@ export class HomePage implements OnInit {
           text: 'Guardar',
           handler: async (data) => {
 
-            const captionFinal = data.caption && data.caption.trim() !== ''
-              ? data.caption
-              : 'Sin descripción';
+            const captionFinal = data.caption?.trim() || 'Por defecto';
 
-            this.photos.unshift({
-              image: this.tempImage,
-              date: new Date().toLocaleDateString(),
-              caption: captionFinal
+            await this.photoDb.savePhoto({
+              imagePath: this.tempImage,
+              caption: captionFinal,
+              photoDate: new Date().toLocaleDateString(),
+              isFavorite: false
             });
 
             this.tempImage = '';
-            await this.savePhotos();
+            this.loadPhotos();
           }
         }
       ]
@@ -100,18 +133,51 @@ export class HomePage implements OnInit {
     await alert.present();
   }
 
-  async deletePhoto(index: number) {
+  async deletePhoto(photo: PhotoItem) {
+    if (!photo.id) return;
+
+    await this.photoDb.deletePhoto(photo.id);
+
+    const fileName = photo.imagePath.split('/').pop();
+    if (fileName) {
+      await Filesystem.deleteFile({
+        path: fileName,
+        directory: Directory.Data
+      });
+    }
+
+    this.loadPhotos();
+  }
+
+  async toggleFavorite(photo: PhotoItem) {
+    if (!photo.id) return;
+    await this.photoDb.updateFavorite(photo.id, !photo.isFavorite);
+    this.loadPhotos();
+  }
+
+  async editCaption(photo: PhotoItem) {
 
     const alert = await this.alertController.create({
-      header: 'Eliminar',
-      message: '¿Seguro que quieres eliminar esta foto?',
+      header: 'Editar descripción',
+      inputs: [
+        {
+          name: 'caption',
+          type: 'text',
+          value: photo.caption
+        }
+      ],
       buttons: [
         { text: 'Cancelar', role: 'cancel' },
         {
-          text: 'Eliminar',
-          handler: async () => {
-            this.photos.splice(index, 1);
-            await this.savePhotos();
+          text: 'Guardar',
+          handler: async (data) => {
+
+            if (!photo.id) return;
+
+            const newCaption = data.caption?.trim() || 'Por defecto';
+
+            await this.photoDb.updateCaption(photo.id, newCaption);
+            this.loadPhotos();
           }
         }
       ]

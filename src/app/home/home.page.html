@@ -1,32 +1,55 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>
-      CAMARA
-    </ion-title>
+    <ion-title>Camara</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
 
   <div class="list-container">
-    <div class="photo-item" *ngFor="let photo of photos; let i = index">
 
-      <img [src]="photo.image" alt="img">
+    <div class="photo-item" *ngFor="let photo of photos">
+
+      <img [src]="photo.imagePath" alt="img">
 
       <div class="photo-details">
-        <div class="photo-date">{{photo.date}}</div>
-        <div class="photo-caption">{{photo.caption}}</div>
 
-        <ion-button 
-          class="delete-btn" 
-          size="small"
-          (click)="deletePhoto(i)">
-          Eliminar
-        </ion-button>
+        <div class="photo-date">
+          {{ photo.photoDate }}
+        </div>
+
+        <div class="photo-caption">
+          {{ photo.caption }}
+        </div>
+
+        <div class="actions">
+
+          
+          <ion-button fill="clear" (click)="toggleFavorite(photo)">
+            <ion-icon
+              [name]="photo.isFavorite ? 'heart' : 'heart-outline'"
+              [color]="photo.isFavorite ? 'danger' : 'medium'">
+            </ion-icon>
+          </ion-button>
+
+          
+          <ion-button fill="clear" (click)="editCaption(photo)">
+            <ion-icon name="create-outline"></ion-icon>
+          </ion-button>
+
+          
+          <ion-button fill="clear" color="danger" (click)="deletePhoto(photo)">
+            <ion-icon name="trash-outline"></ion-icon>
+          </ion-button>
+
+        </div>
+
       </div>
 
     </div>
+
   </div>
+
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">
     <ion-fab-button (click)="takePicture()">

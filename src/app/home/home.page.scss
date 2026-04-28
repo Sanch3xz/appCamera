@@ -2,23 +2,19 @@ ion-content {
   --background: #e0f7f5;
 }
 
-/* Contenedor general */
 .list-container {
   padding: 12px;
 }
 
-/* Tarjeta horizontal */
 .photo-item {
   display: flex;
-  align-items: center;
-  background: #ffffff;
+  background: #fff;
   border-radius: 14px;
   margin-bottom: 12px;
   padding: 8px;
   box-shadow: 0 3px 8px rgba(0,0,0,0.08);
 }
 
-/* Imagen */
 .photo-item img {
   width: 90px;
   height: 90px;
@@ -27,49 +23,31 @@ ion-content {
   margin-right: 10px;
 }
 
-/* Contenido */
 .photo-details {
   flex: 1;
 }
 
-/* Fecha */
 .photo-date {
   font-size: 12px;
   color: #666;
-  font-weight: 300;
 }
 
-/* Descripción */
 .photo-caption {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
-  color: #222;
   margin: 4px 0;
 }
 
-/* Botón eliminar */
-.delete-btn {
-  --background: #20c997;
-  --border-radius: 8px;
-  font-size: 12px;
-  font-weight: 500;
+.actions {
+  display: flex;
+  gap: 5px;
 }
 
-/* Toolbar (barra superior) */
 ion-toolbar {
   --background: #20c997;
   --color: white;
 }
 
-/* Título */
-ion-title {
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
-/* Botón flotante */
 ion-fab-button {
   --background: #20c997;
-  --background-activated: #17a589;
-  --box-shadow: 0 4px 10px rgba(0,0,0,0.2);
 }
